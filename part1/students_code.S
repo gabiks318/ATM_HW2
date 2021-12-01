@@ -20,6 +20,26 @@ sbox:	.byte	99,124,119,123,-14,107,111,-59,48,1,103,43,-2,-41,-85,118
 
 .section	.text
 keyMixing:
+        # rdi - input
+        # rsi - key
+        # r9  - i
+        pushq %rbp
+        movq %rsp, %rbp
+        xorq %r9,%r9
+xor_op:
+        # Calculate XOR and store value
+        movq (%rdi), %rbx
+        movq (%rsi), %rcx
+        xorq %rbx, %rcx
+        movq %rcx, (%rsi)
+        
+        # Increment values
+        addq $32, %rdi
+        inc %r9
+        cmp $3, %r9
+        jne xor_op
+        
+        leave
 	ret
 
 
