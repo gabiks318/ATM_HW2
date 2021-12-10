@@ -272,7 +272,7 @@ cipher:
         add $16, %rdi
         inc %r9
         cmp %r9, %rdx
-        jl key_mix
+        jne key_mix
         
         leave
 	ret
