@@ -146,36 +146,44 @@ cipher:
         push %rsi
         push %rdx
         push %r9
+        push %r10
         
         call keyMixing
         
+        pop %r10
         pop %r9
         pop %rdx
         pop %rsi
         pop %rdi
         
         loop:
+        
         # a.byteSubstitution
         push %rdi
         push %rsi
         push %rdx
         push %r9
+        push %r10
         
         call byteSubstitution
         
+        pop %r10
         pop %r9
         pop %rdx
         pop %rsi
         pop %rdi
+        
         
         # b.shiftRows
         push %rdi
         push %rsi
         push %rdx
         push %r9
+        push %r10
         
         call shiftRows
         
+        pop %r10
         pop %r9
         pop %rdx
         pop %rsi
@@ -186,9 +194,11 @@ cipher:
         push %rsi
         push %rdx
         push %r9
+        push %r10
         
         call mixColumns
         
+        pop %r10
         pop %r9
         pop %rdx
         pop %rsi
@@ -199,9 +209,11 @@ cipher:
         push %rsi
         push %rdx
         push %r9
+        push %r10
         
         call keyMixing
         
+        pop %r10
         pop %r9
         pop %rdx
         pop %rsi
@@ -211,14 +223,18 @@ cipher:
         cmp $9, %r10
         jne loop
         xor %r10, %r10
-        /*
+        
         # 3.byteSubstitution
         push %rdi
         push %rsi
         push %rdx
+        push %r9
+        push %r10
         
         call byteSubstitution
         
+        pop %r10
+        pop %r9
         pop %rdx
         pop %rsi
         pop %rdi
@@ -227,9 +243,13 @@ cipher:
         push %rdi
         push %rsi
         push %rdx
+        push %r9
+        push %r10
         
         call shiftRows
         
+        pop %r10
+        pop %r9
         pop %rdx
         pop %rsi
         pop %rdi
@@ -238,14 +258,18 @@ cipher:
         push %rdi
         push %rsi
         push %rdx
+        push %r9
+        push %r10
         
         call keyMixing
         
+        pop %r10
+        pop %r9
         pop %rdx
         pop %rsi
         pop %rdi
-        */
-        addq $16, %rdi
+        
+        add $16, %rdi
         inc %r9
         cmp %r9, %rdx
         jl key_mix
