@@ -26,17 +26,21 @@ keyMixing:
         pushq %rbp
         movq %rsp, %rbp
         xorq %r9,%r9
-xor_op:
+        
+    xor_op:
         # Calculate XOR and store value
-        movq (%rdi), %rbx
-        movq (%rsi), %rcx
-        xorq %rbx, %rcx
-        movq %rcx, (%rsi)
+        xor %rbx, %rbx
+        xor %rcx, %rcx
+        movb (%rdi), %bl
+        movb (%rsi), %cl
+        xor %bl, %cl
+        movb %cl, (%rdi)
         
         # Increment values
-        addq $32, %rdi
+        addq $1, %rdi
+        addq $1, %rsi
         inc %r9
-        cmp $3, %r9
+        cmp $16, %r9
         jne xor_op
         
         leave
@@ -44,12 +48,207 @@ xor_op:
 
 
 byteSubstitution:
+        # rdi - input
+        # r9  - i
+        # r10 - current address
+        # r11 - sbox address
+        # bl  - current byte
+        # cl  - swapped byte
+        pushq %rbp
+        movq %rsp, %rbp
+        xorq %r9, %r9
+        xorq %r11, %r11
+        leaq sbox(%rip), %r11
+        
+        subsitute:
+        xorq %r10, %r10
+        xorq %rbx, %rbx
+        xorq %rcx, %rcx
+        movb (%rdi), %bl
+        add  %r11, %rbx
+        movb (%rbx), %cl
+        movb %cl, (%rdi)
+        
+        addq $1, %rdi
+        inc %r9
+        cmp $16, %r9
+        jne subsitute
+        
+        leave
 	ret
 
 
 shiftRows:
+        # rdi - input
+        # r9  - i
+        # r10 - j
+        # al  - row[0]
+        # bl  - row[1]
+        # cl  - row[2]
+        # dl  - row[3]
+        pushq %rbp
+        movq %rsp, %rbp
+        xorq %r9, %r9
+        xorq %r10, %r10
+        
+        inner_loop:
+        cmp %r10, %r9
+        je outer_loop
+        inc %r10
+        
+        xorq %rax, %rax
+        xorq %rbx, %rbx
+        xorq %rcx, %rcx
+        xorq %rdx, %rdx
+        
+        movb (%rdi), %al
+        movb 1(%rdi), %bl
+        movb 2(%rdi), %cl
+        movb 3(%rdi), %dl
+        
+        movb %al, 3(%rdi)
+        movb %bl, (%rdi)
+        movb %cl, 1(%rdi)
+        movb %dl, 2(%rdi)
+        
+        
+        jmp inner_loop
+        
+        outer_loop:
+        xorq %r10, %r10
+        inc %r9
+        addq $4, %rdi
+        cmp $4,%r9
+        jne inner_loop
+                
+        
+        leave
 	ret
 
 
 cipher:
+        # rdi - input
+        # rsi - key
+        # rdx - len
+        # r9  - i
+        # r10 - j
+        # r11 - input_copy
+        pushq %rbp
+        movq %rsp, %rbp
+        
+        xorq %r9, %r9
+        xorq %r10, %r10
+        movq %rdi, %r11
+        
+        # 1.Key mixing
+        key_mix:
+        push %rdi
+        push %rsi
+        push %rdx
+        push %r9
+        
+        call keyMixing
+        
+        pop %r9
+        pop %rdx
+        pop %rsi
+        pop %rdi
+        
+        loop:
+        # a.byteSubstitution
+        push %rdi
+        push %rsi
+        push %rdx
+        push %r9
+        
+        call byteSubstitution
+        
+        pop %r9
+        pop %rdx
+        pop %rsi
+        pop %rdi
+        
+        # b.shiftRows
+        push %rdi
+        push %rsi
+        push %rdx
+        push %r9
+        
+        call shiftRows
+        
+        pop %r9
+        pop %rdx
+        pop %rsi
+        pop %rdi
+        
+        # c.mixColumns
+        push %rdi
+        push %rsi
+        push %rdx
+        push %r9
+        
+        call mixColumns
+        
+        pop %r9
+        pop %rdx
+        pop %rsi
+        pop %rdi
+        
+        # d.keyMixing
+        push %rdi
+        push %rsi
+        push %rdx
+        push %r9
+        
+        call keyMixing
+        
+        pop %r9
+        pop %rdx
+        pop %rsi
+        pop %rdi
+        
+        inc %r10
+        cmp $9, %r10
+        jne loop
+        xor %r10, %r10
+        /*
+        # 3.byteSubstitution
+        push %rdi
+        push %rsi
+        push %rdx
+        
+        call byteSubstitution
+        
+        pop %rdx
+        pop %rsi
+        pop %rdi
+        
+        # 4.shiftRows
+        push %rdi
+        push %rsi
+        push %rdx
+        
+        call shiftRows
+        
+        pop %rdx
+        pop %rsi
+        pop %rdi
+        
+        # 5.keyMixing
+        push %rdi
+        push %rsi
+        push %rdx
+        
+        call keyMixing
+        
+        pop %rdx
+        pop %rsi
+        pop %rdi
+        */
+        addq $16, %rdi
+        inc %r9
+        cmp %r9, %rdx
+        jl key_mix
+        
+        leave
 	ret
